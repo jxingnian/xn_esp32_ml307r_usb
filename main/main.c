@@ -2,8 +2,8 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-22 20:17:58
- * @FilePath: \xn_web_wifi_config\main\main.c
+ * @LastEditTime: 2025-11-24 11:14:54
+ * @FilePath: \xn_ml307r_usb\main\main.c
  * @Description: esp32 网页WiFi配网 By.星年
  */
 
