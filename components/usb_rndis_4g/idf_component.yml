@@ -1,0 +1,14 @@
+## USB RNDIS 4G组件依赖配置
+
+dependencies:
+  idf:
+    version: '>=4.4.0'
+  
+  # USB RNDIS驱动（会自动安装iot_usbh_cdc依赖）
+  espressif/iot_usbh_rndis: ^0.2.0
+  
+  # 以太网抽象层
+  espressif/iot_eth: ^0.1.0
+  
+  # ML307模块支持（用于AT命令和软重启）
+
