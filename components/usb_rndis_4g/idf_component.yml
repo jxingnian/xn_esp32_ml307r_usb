@@ -10,5 +10,4 @@ dependencies:
   # 以太网抽象层
   espressif/iot_eth: ^0.1.0
   
-  # ML307模块支持（用于AT命令和软重启）
 

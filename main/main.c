@@ -2,9 +2,9 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-24 11:14:54
+ * @LastEditTime: 2025-11-24 11:35:53
  * @FilePath: \xn_ml307r_usb\main\main.c
- * @Description: esp32 网页WiFi配网 By.星年
+ * @Description: esp32 usb rndis 4g By.星年
  */
 
 #include <stdio.h>
@@ -34,6 +34,9 @@ static void usb_4g_event_handler(usb_rndis_event_t event,
     case USB_RNDIS_EVENT_GOT_IP:
         if (ip_info) {
             ESP_LOGI("app", "4G 已获取 IP: " IPSTR, IP2STR(&ip_info->ip));
+
+            // 可选：启动 ping 测试，用于简单监控 4G 网络连通性
+            (void)usb_rndis_4g_start_ping_test();
         } else {
             ESP_LOGI("app", "4G 已获取 IP");
         }
@@ -70,9 +73,6 @@ void app_main(void)
         ESP_LOGE("app", "usb_rndis_4g_init failed: %s", esp_err_to_name(ret));
         return;
     }
-
-    // 可选：启动 ping 测试，用于简单监控 4G 网络连通性
-    (void)usb_rndis_4g_start_ping_test();
 
     // app_main 返回后，后续工作由事件回调和后台任务驱动
 }
