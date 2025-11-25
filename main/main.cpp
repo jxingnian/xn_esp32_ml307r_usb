@@ -2,7 +2,7 @@
  * @Author: 星年 && jixingnian@gmail.com
  * @Date: 2025-11-25 20:18:39
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-25 20:34:59
+ * @LastEditTime: 2025-11-25 20:37:16
  * @FilePath: \xn_esp32_ml307r_usb\main\main.cpp
  * @Description: 
  * 
@@ -74,7 +74,7 @@ void TestHttp(std::unique_ptr<AtModem>& modem) {
 
 extern "C" void app_main(void) {
     // 自动检测并初始化模组
-    auto modem = AtModem::Detect(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15, 921600);
+    auto modem = AtModem::Detect(GPIO_NUM_17, GPIO_NUM_13, GPIO_NUM_NC, 921600);
     
     if (!modem) {
         ESP_LOGE(TAG, "模组检测失败");
