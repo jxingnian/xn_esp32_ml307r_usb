@@ -2,8 +2,8 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-24 11:35:53
- * @FilePath: \xn_ml307r_usb\main\main.c
+ * @LastEditTime: 2025-11-25 10:00:31
+ * @FilePath: \xn_esp32_ml307r_usb\main\main.c
  * @Description: esp32 usb rndis 4g By.星年
  */
 
@@ -50,20 +50,8 @@ void app_main(void)
 {
     printf("USB RNDIS 4G 联网示例 By.星年\n");
 
-    // 初始化网络栈和默认事件循环（usb_rndis_4g 组件依赖）
-    esp_err_t ret = esp_netif_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE("app", "esp_netif_init failed: %s", esp_err_to_name(ret));
-        return;
-    }
-
-    ret = esp_event_loop_create_default();
-    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        ESP_LOGE("app", "event loop create failed: %s", esp_err_to_name(ret));
-        return;
-    }
-
-    // 使用默认配置 + 自定义事件回调初始化 4G 模块
+    // 使用默认配置 + 自定义事件回调初始化 4G 模块（组件内部完成网络栈和事件循环初始化）
+    esp_err_t ret;
     usb_rndis_config_t cfg = USB_RNDIS_4G_DEFAULT_CONFIG();
     cfg.event_callback     = usb_4g_event_handler;
     cfg.user_data          = NULL;

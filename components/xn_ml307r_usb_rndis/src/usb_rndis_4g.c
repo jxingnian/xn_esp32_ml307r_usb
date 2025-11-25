@@ -199,6 +199,19 @@ esp_err_t usb_rndis_4g_init(const usb_rndis_config_t *config)
 
     ESP_LOGI(TAG, "========== 初始化USB RNDIS 4G网络 ==========");
     
+    // 初始化网络栈和默认事件循环（容忍已初始化状态）
+    esp_err_t ret = esp_netif_init();
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "esp_netif_init failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = esp_event_loop_create_default();
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "event loop create failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
     /* ========== 第一步：注册事件处理函数 ========== */
     // 注册IOT以太网事件处理函数
     ESP_ERROR_CHECK(esp_event_handler_register(IOT_ETH_EVENT, ESP_EVENT_ANY_ID, iot_event_handle, NULL));
@@ -214,7 +227,7 @@ esp_err_t usb_rndis_4g_init(const usb_rndis_config_t *config)
         .skip_init_usb_host_driver = false,     // 不跳过USB主机驱动初始化
     };
     
-    esp_err_t ret = usbh_cdc_driver_install(&cdc_config);
+    ret = usbh_cdc_driver_install(&cdc_config);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "USB CDC驱动安装失败: %s", esp_err_to_name(ret));
         return ret;
