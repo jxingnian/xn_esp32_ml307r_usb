@@ -1,4 +1,8 @@
+#include <memory>
+#include <string>
+
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "at_modem.h"
 
 static const char *TAG = "ML307_DEMO";
@@ -11,16 +15,32 @@ void TestHttp(std::unique_ptr<AtModem>& modem) {
     
     // 设置请求头
     http->SetHeader("User-Agent", "Xiaozhi/3.0.0");
-    http->SetTimeout(10000);
+    http->SetTimeout(60000);
+
+    const char *url = "http://win.xingnian.vip:16623/firmware/esp-chunfeng.bin";
     
-    // 发送 GET 请求
-    if (http->Open("GET", "https://httpbin.org/json")) {
+    // 发送 GET 请求并统计下载时间与速度
+    int64_t start_time_us = esp_timer_get_time();
+    if (http->Open("GET", url)) {
         ESP_LOGI(TAG, "HTTP 状态码: %d", http->GetStatusCode());
-        ESP_LOGI(TAG, "响应内容长度: %zu bytes", http->GetBodyLength());
+        ESP_LOGI(TAG, "响应内容长度(服务器声明): %zu bytes", http->GetBodyLength());
         
         // 读取响应内容
         std::string response = http->ReadAll();
-        ESP_LOGI(TAG, "响应内容: %s", response.c_str());
+        int64_t end_time_us = esp_timer_get_time();
+
+        size_t downloaded_bytes = response.size();
+        double elapsed_s = (end_time_us - start_time_us) / 1000000.0;
+
+        if (elapsed_s > 0) {
+            double speed_kBps = downloaded_bytes / 1024.0 / elapsed_s;
+            double speed_Mbps = downloaded_bytes * 8.0 / 1000.0 / 1000.0 / elapsed_s;
+            ESP_LOGI(TAG, "实际下载大小: %zu bytes", downloaded_bytes);
+            ESP_LOGI(TAG, "耗时: %.2f s", elapsed_s);
+            ESP_LOGI(TAG, "平均速度: %.2f kB/s (%.2f Mbps)", speed_kBps, speed_Mbps);
+        } else {
+            ESP_LOGW(TAG, "下载耗时过短，无法计算速度");
+        }
         
         http->Close();
     } else {
@@ -57,4 +77,6 @@ extern "C" void app_main(void) {
     ESP_LOGI(TAG, "ICCID: %s", modem->GetIccid().c_str());
     ESP_LOGI(TAG, "运营商: %s", modem->GetCarrierName().c_str());
     ESP_LOGI(TAG, "信号强度: %d", modem->GetCsq());
+
+    TestHttp(modem);
 }
