@@ -1,3 +1,13 @@
+/*
+ * @Author: 星年 && jixingnian@gmail.com
+ * @Date: 2025-11-25 20:18:39
+ * @LastEditors: xingnian jixingnian@gmail.com
+ * @LastEditTime: 2025-11-25 20:34:59
+ * @FilePath: \xn_esp32_ml307r_usb\main\main.cpp
+ * @Description: 
+ * 
+ * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved. 
+ */
 #include <memory>
 #include <string>
 
@@ -24,22 +34,34 @@ void TestHttp(std::unique_ptr<AtModem>& modem) {
     if (http->Open("GET", url)) {
         ESP_LOGI(TAG, "HTTP 状态码: %d", http->GetStatusCode());
         ESP_LOGI(TAG, "响应内容长度(服务器声明): %zu bytes", http->GetBodyLength());
-        
-        // 读取响应内容
-        std::string response = http->ReadAll();
-        int64_t end_time_us = esp_timer_get_time();
 
-        size_t downloaded_bytes = response.size();
+        size_t downloaded_bytes = 0;
+        constexpr size_t buffer_size = 4096;
+        char buffer[buffer_size];
+
+        while (true) {
+            int read_len = http->Read(buffer, buffer_size);
+            if (read_len < 0) {
+                ESP_LOGE(TAG, "HTTP 读取失败");
+                break;
+            }
+            if (read_len == 0) {
+                break;
+            }
+            downloaded_bytes += static_cast<size_t>(read_len);
+        }
+
+        int64_t end_time_us = esp_timer_get_time();
         double elapsed_s = (end_time_us - start_time_us) / 1000000.0;
 
-        if (elapsed_s > 0) {
+        if (elapsed_s > 0 && downloaded_bytes > 0) {
             double speed_kBps = downloaded_bytes / 1024.0 / elapsed_s;
             double speed_Mbps = downloaded_bytes * 8.0 / 1000.0 / 1000.0 / elapsed_s;
             ESP_LOGI(TAG, "实际下载大小: %zu bytes", downloaded_bytes);
             ESP_LOGI(TAG, "耗时: %.2f s", elapsed_s);
             ESP_LOGI(TAG, "平均速度: %.2f kB/s (%.2f Mbps)", speed_kBps, speed_Mbps);
         } else {
-            ESP_LOGW(TAG, "下载耗时过短，无法计算速度");
+            ESP_LOGW(TAG, "下载耗时过短或未收到数据，无法计算速度");
         }
         
         http->Close();
