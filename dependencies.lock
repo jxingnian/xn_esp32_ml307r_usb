@@ -1,4 +1,14 @@
 dependencies:
+  78/esp-ml307:
+    component_hash: 994a3e2b47612874084d8550534031c92de02b16e880da35dff0a5bcbfc92ed0
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 3.5.2
   espressif/cmake_utilities:
     component_hash: 05165f30922b422b4b90c08845e6d449329b97370fbd06309803d8cb539d79e3
     dependencies:
@@ -72,9 +82,10 @@ dependencies:
       type: idf
     version: 5.5.0
 direct_dependencies:
+- 78/esp-ml307
 - espressif/iot_eth
 - espressif/iot_usbh_rndis
 - idf
-manifest_hash: 5fe15c9d5c3738741c4a59c2bbd27f655b4cb3db017dc65c9cbeacdca2144478
+manifest_hash: fed01b4164c0adcdde359fcf5ac720ce9a0e2cd3b49bc47a27ba26c9d3eca47a
 target: esp32s3
 version: 2.0.0

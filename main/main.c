@@ -1,66 +1,60 @@
-/*
- * @Author: 星年 jixingnian@gmail.com
- * @Date: 2025-11-22 13:43:50
- * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-25 10:00:31
- * @FilePath: \xn_esp32_ml307r_usb\main\main.c
- * @Description: esp32 usb rndis 4g By.星年
- */
-
-#include <stdio.h>
-#include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_system.h"
-#include "esp_event.h"
-#include "esp_netif.h"
 #include "esp_log.h"
-#include "usb_rndis_4g.h"
+#include "at_modem.h"
 
-// 4G 事件回调：通过日志输出当前状态
-static void usb_4g_event_handler(usb_rndis_event_t event,
-                                 esp_netif_ip_info_t *ip_info,
-                                 void *user_data)
-{
-    (void)user_data;
+static const char *TAG = "ML307_DEMO";
 
-    switch (event) {
-    case USB_RNDIS_EVENT_CONNECTED:
-        ESP_LOGI("app", "4G 设备已连接");
-        break;
-    case USB_RNDIS_EVENT_DISCONNECTED:
-        ESP_LOGW("app", "4G 设备已断开");
-        break;
-    case USB_RNDIS_EVENT_GOT_IP:
-        if (ip_info) {
-            ESP_LOGI("app", "4G 已获取 IP: " IPSTR, IP2STR(&ip_info->ip));
+void TestHttp(std::unique_ptr<AtModem>& modem) {
+    ESP_LOGI(TAG, "开始 HTTP 测试");
 
-            // 可选：启动 ping 测试，用于简单监控 4G 网络连通性
-            (void)usb_rndis_4g_start_ping_test();
-        } else {
-            ESP_LOGI("app", "4G 已获取 IP");
-        }
-        break;
-    default:
-        break;
+    // 创建 HTTP 客户端
+    auto http = modem->CreateHttp(0);
+    
+    // 设置请求头
+    http->SetHeader("User-Agent", "Xiaozhi/3.0.0");
+    http->SetTimeout(10000);
+    
+    // 发送 GET 请求
+    if (http->Open("GET", "https://httpbin.org/json")) {
+        ESP_LOGI(TAG, "HTTP 状态码: %d", http->GetStatusCode());
+        ESP_LOGI(TAG, "响应内容长度: %zu bytes", http->GetBodyLength());
+        
+        // 读取响应内容
+        std::string response = http->ReadAll();
+        ESP_LOGI(TAG, "响应内容: %s", response.c_str());
+        
+        http->Close();
+    } else {
+        ESP_LOGE(TAG, "HTTP 请求失败");
     }
+    
+    // unique_ptr 会自动释放内存，无需手动 delete
 }
 
-void app_main(void)
-{
-    printf("USB RNDIS 4G 联网示例 By.星年\n");
-
-    // 使用默认配置 + 自定义事件回调初始化 4G 模块（组件内部完成网络栈和事件循环初始化）
-    esp_err_t ret;
-    usb_rndis_config_t cfg = USB_RNDIS_4G_DEFAULT_CONFIG();
-    cfg.event_callback     = usb_4g_event_handler;
-    cfg.user_data          = NULL;
-
-    ret = usb_rndis_4g_init(&cfg);
-    if (ret != ESP_OK) {
-        ESP_LOGE("app", "usb_rndis_4g_init failed: %s", esp_err_to_name(ret));
+extern "C" void app_main(void) {
+    // 自动检测并初始化模组
+    auto modem = AtModem::Detect(GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15, 921600);
+    
+    if (!modem) {
+        ESP_LOGE(TAG, "模组检测失败");
         return;
     }
-
-    // app_main 返回后，后续工作由事件回调和后台任务驱动
+    
+    // 设置网络状态回调
+    modem->OnNetworkStateChanged([](bool ready) {
+        ESP_LOGI(TAG, "网络状态: %s", ready ? "已连接" : "已断开");
+    });
+    
+    // 等待网络就绪
+    NetworkStatus status = modem->WaitForNetworkReady(30000);
+    if (status != NetworkStatus::Ready) {
+        ESP_LOGE(TAG, "网络连接失败");
+        return;
+    }
+    
+    // 打印模组信息
+    ESP_LOGI(TAG, "模组版本: %s", modem->GetModuleRevision().c_str());
+    ESP_LOGI(TAG, "IMEI: %s", modem->GetImei().c_str());
+    ESP_LOGI(TAG, "ICCID: %s", modem->GetIccid().c_str());
+    ESP_LOGI(TAG, "运营商: %s", modem->GetCarrierName().c_str());
+    ESP_LOGI(TAG, "信号强度: %d", modem->GetCsq());
 }
