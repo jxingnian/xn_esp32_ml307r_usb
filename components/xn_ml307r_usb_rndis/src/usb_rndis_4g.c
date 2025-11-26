@@ -177,6 +177,7 @@ static void ip_event_handle(void *arg, esp_event_base_t event_base, int32_t even
         ESP_LOGI(TAG, "  网关  : " IPSTR, IP2STR(&ip_info->gw));
         ESP_LOGI(TAG, "  子网掩码: " IPSTR, IP2STR(&ip_info->netmask));
         
+        vTaskDelay(2000 / portTICK_PERIOD_MS);  // 等待2秒
         // 通知应用层
         if (g_event_callback) {
             g_event_callback(USB_RNDIS_EVENT_GOT_IP, ip_info, g_user_data);
@@ -330,14 +331,14 @@ esp_err_t usb_rndis_4g_start_ping_test(void)
     
     // 配置ping参数
     ip_addr_t target_addr;
-    ipaddr_aton("8.8.8.8", &target_addr);  // Google DNS
+    ipaddr_aton("124.237.177.164", &target_addr);  // Google DNS
     
     esp_ping_config_t ping_config = ESP_PING_DEFAULT_CONFIG();
     ping_config.target_addr = target_addr;
     ping_config.timeout_ms = 2000;
     ping_config.task_stack_size = 4096;
     ping_config.count = ESP_PING_COUNT_INFINITE;  // 持续ping
-    ping_config.interval_ms = 5000;  // 5秒间隔
+    ping_config.interval_ms = 1000;  // 5秒间隔
     
     // 设置回调函数
     esp_ping_callbacks_t cbs = {
